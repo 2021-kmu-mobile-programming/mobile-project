@@ -11,21 +11,26 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.setupActionBarWithNavController
-import androidx.navigation.ui.setupWithNavController
+import com.dongholab.rainoti.api.WeatherAPI
+import com.dongholab.rainoti.data.Weather
 import com.dongholab.rainoti.databinding.ActivityMainBinding
 import com.dongholab.rainoti.service.LocationService
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.snackbar.Snackbar
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 private const val TAG = "MainActivity"
 private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 
 class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
+
+    companion object {
+        val API_KEY: String = "7d2aae1e6ca6f98074073f32bb0f7ef4"
+    }
 
     private lateinit var binding: ActivityMainBinding
 
@@ -42,6 +47,8 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     private lateinit var foregroundOnlyLocationButton: Button
 
     private lateinit var outputTextView: TextView
+
+    lateinit var weatherAPI: WeatherAPI;
 
     // Monitors connection to the while-in-use service.
     private val foregroundOnlyServiceConnection = object : ServiceConnection {
@@ -67,6 +74,13 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://api.openweathermap.org")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+        weatherAPI = retrofit.create(WeatherAPI::class.java)
+//        val callGetSearchNews = api.getSearchNews(API_KEY, "테스트")
 //        binding.navView.
 
 //        val permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -226,6 +240,21 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             )
 
             if (location != null) {
+                val getWeatherApi: Call<Weather> = weatherAPI.getWeather(API_KEY, location.altitude, location.latitude, "kr")
+                getWeatherApi.enqueue(object: Callback<Weather> {
+                    override fun onResponse(
+                        call: Call<Weather>,
+                        response: Response<Weather>
+                    ) {
+                        if (response.isSuccessful) {
+                            Log.d(TAG, "성공 : ${response.body()?.weather.toString()}")
+                        }
+                    }
+
+                    override fun onFailure(call: Call<Weather>, t: Throwable) {
+                        Log.d(TAG, "실패 : $t")
+                    }
+                })
                 logResultsToScreen("Foreground location: ${location.toText()}")
             }
         }
