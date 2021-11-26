@@ -48,6 +48,8 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
     private lateinit var outputTextView: TextView
 
+    private lateinit var currentWeatherTextView: TextView
+
     lateinit var weatherAPI: WeatherAPI;
 
     // Monitors connection to the while-in-use service.
@@ -109,6 +111,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 //        setupActionBarWithNavController(navController, appBarConfiguration)
 //        navView.setupWithNavController(navController)
 
+        currentWeatherTextView = binding.currentWeather
         outputTextView = binding.outputTextView
         foregroundOnlyLocationButton = binding.foregroundOnlyLocationButton
 
@@ -240,14 +243,21 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             )
 
             if (location != null) {
-                val getWeatherApi: Call<Weather> = weatherAPI.getWeather(API_KEY, location.altitude, location.latitude, "kr")
+                val getWeatherApi: Call<Weather> = weatherAPI.getWeather(API_KEY, location.latitude, location.longitude, "kr")
                 getWeatherApi.enqueue(object: Callback<Weather> {
                     override fun onResponse(
                         call: Call<Weather>,
                         response: Response<Weather>
                     ) {
                         if (response.isSuccessful) {
-                            Log.d(TAG, "성공 : ${response.body()?.weather.toString()}")
+                            val weather: Weather? = response.body()
+                            weather?.let {
+                                Log.d(TAG, "성공 : ${it}")
+                                val weatherString = it.weather.map {
+                                    Pair(it.main, it.description)
+                                }.joinToString("\n")
+                                currentWeatherTextView.setText(weatherString)
+                            }
                         }
                     }
 
