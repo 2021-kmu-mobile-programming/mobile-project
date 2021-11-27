@@ -13,15 +13,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.dongholab.rainoti.api.WeatherAPI
-import com.dongholab.rainoti.data.Weather
+import com.dongholab.rainoti.api.WeatherGenerator
 import com.dongholab.rainoti.databinding.ActivityMainBinding
 import com.dongholab.rainoti.service.LocationService
 import com.google.android.material.snackbar.Snackbar
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 
 private const val TAG = "MainActivity"
 private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
@@ -36,10 +31,8 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
     private var foregroundOnlyLocationServiceBound = false
 
-    // Provides location updates for while-in-use feature.
     private var foregroundOnlyLocationService: LocationService? = null
 
-    // Listens for location broadcasts from ForegroundOnlyLocationService.
     private lateinit var foregroundOnlyBroadcastReceiver: ForegroundOnlyBroadcastReceiver
 
     private lateinit var sharedPreferences: SharedPreferences
@@ -52,8 +45,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
     lateinit var weatherAPI: WeatherAPI;
 
-    // Monitors connection to the while-in-use service.
-    private val foregroundOnlyServiceConnection = object : ServiceConnection {
+    private val foregroundOnlyServiceConnection = object: ServiceConnection {
 
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
             val binder = service as LocationService.LocalBinder
@@ -77,39 +69,15 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://api.openweathermap.org")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        weatherAPI = retrofit.create(WeatherAPI::class.java)
-//        val callGetSearchNews = api.getSearchNews(API_KEY, "테스트")
-//        binding.navView.
+        weatherAPI = WeatherGenerator.generate().create(WeatherAPI::class.java)
 
-//        val permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-//
-//        if (permissionCheck == PackageManager.PERMISSION_DENIED) { //포그라운드 위치 권한 확인
-//            //위치 권한 요청
-//            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 0)
-//        }
-//
-//        val permissionCheck2 = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-//        if (permissionCheck2 == PackageManager.PERMISSION_DENIED) { //백그라운드 위치 권한 확인
-//            //위치 권한 요청
-//            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), 0)
-//        }
-
-//        val navView: BottomNavigationView = binding.navView
-//
-//        val navController = findNavController(R.id.nav_host_fragment_activity_main)
-//        // Passing each menu ID as a set of Ids because each
-//        // menu should be considered as top level destinations.
-//        val appBarConfiguration = AppBarConfiguration(
-//            setOf(
-//                R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications
-//            )
-//        )
-//        setupActionBarWithNavController(navController, appBarConfiguration)
-//        navView.setupWithNavController(navController)
+//        val js = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
+//        val serviceComponent = ComponentName(this, MyJobService::class.java)
+//        val jobInfo = JobInfo.Builder(1, serviceComponent)
+//            .setPeriodic(TimeUnit.MINUTES.toMillis(15))
+//            .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+//            .build()
+//        js.schedule(jobInfo)
 
         currentWeatherTextView = binding.currentWeather
         outputTextView = binding.outputTextView
@@ -122,11 +90,8 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             if (enabled) {
                 foregroundOnlyLocationService?.unsubscribeToLocationUpdates()
             } else {
-
-                // TODO: Step 1.0, Review Permissions: Checks and requests if needed.
                 if (foregroundPermissionApproved()) {
-                    foregroundOnlyLocationService?.subscribeToLocationUpdates()
-                        ?: Log.d(TAG, "Service Not Bound")
+                    foregroundOnlyLocationService?.subscribeToLocationUpdates() ?: Log.d(TAG, "Service Not Bound")
                 } else {
                     requestForegroundPermissions()
                 }
@@ -137,8 +102,6 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     private fun requestForegroundPermissions() {
         val provideRationale = foregroundPermissionApproved()
 
-        // If the user denied a previous request, but didn't check "Don't ask again", provide
-        // additional rationale.
         if (provideRationale) {
             Snackbar.make(
                 findViewById(R.id.activity_main),
@@ -185,10 +148,14 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
     override fun onResume() {
         super.onResume()
+
+        val appendFilter = IntentFilter()
+        appendFilter.addAction(LocationService.ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST)
+        appendFilter.addAction(LocationService.ACTION_FOREGROUND_ONLY_WEATHER_BROADCAST)
+
         LocalBroadcastManager.getInstance(this).registerReceiver(
             foregroundOnlyBroadcastReceiver,
-            IntentFilter(
-                LocationService.ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST)
+            appendFilter
         )
     }
 
@@ -218,7 +185,6 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         }
     }
 
-
     private fun updateButtonState(trackingLocation: Boolean) {
         if (trackingLocation) {
             foregroundOnlyLocationButton.text = getString(R.string.stop_location_updates_button_text)
@@ -232,40 +198,24 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         outputTextView.text = outputWithPreviousLogs
     }
 
-    /**
-     * Receiver for location broadcasts from [ForegroundOnlyLocationService].
-     */
-    private inner class ForegroundOnlyBroadcastReceiver : BroadcastReceiver() {
-
+    private inner class ForegroundOnlyBroadcastReceiver: BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            val location = intent.getParcelableExtra<Location>(
-                LocationService.EXTRA_LOCATION
-            )
+            when (intent.action) {
+                LocationService.ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST -> {
+                    val location = intent.getParcelableExtra<Location>(
+                        LocationService.EXTRA_LOCATION
+                    )
 
-            if (location != null) {
-                val getWeatherApi: Call<Weather> = weatherAPI.getWeather(API_KEY, location.latitude, location.longitude, "kr")
-                getWeatherApi.enqueue(object: Callback<Weather> {
-                    override fun onResponse(
-                        call: Call<Weather>,
-                        response: Response<Weather>
-                    ) {
-                        if (response.isSuccessful) {
-                            val weather: Weather? = response.body()
-                            weather?.let {
-                                Log.d(TAG, "성공 : ${it}")
-                                val weatherString = it.weather.map {
-                                    Pair(it.main, it.description)
-                                }.joinToString("\n")
-                                currentWeatherTextView.setText(weatherString)
-                            }
-                        }
+                    if (location != null) {
+                        logResultsToScreen("Foreground location: ${location.toText()}")
                     }
+                }
+                LocationService.ACTION_FOREGROUND_ONLY_WEATHER_BROADCAST -> {
+                    val weatherId = intent.getIntExtra(LocationService.EXTRA_WEATHER_ID, 0)
+                    val weatherDesc = intent.getStringExtra(LocationService.EXTRA_WEATHER_DESC)
 
-                    override fun onFailure(call: Call<Weather>, t: Throwable) {
-                        Log.d(TAG, "실패 : $t")
-                    }
-                })
-                logResultsToScreen("Foreground location: ${location.toText()}")
+                    binding.currentWeather.text = "$weatherId / $weatherDesc"
+                }
             }
         }
     }

@@ -16,8 +16,14 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.dongholab.rainoti.MainActivity
 import com.dongholab.rainoti.R
 import com.dongholab.rainoti.SharedPreferenceUtil
+import com.dongholab.rainoti.api.WeatherAPI
+import com.dongholab.rainoti.api.WeatherGenerator
+import com.dongholab.rainoti.data.Weather
 import com.dongholab.rainoti.toText
 import com.google.android.gms.location.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.util.concurrent.TimeUnit
 
 /**
@@ -29,16 +35,19 @@ import java.util.concurrent.TimeUnit
  * versions. Please reference documentation for details.
  */
 class LocationService : Service() {
-
     companion object {
+        val API_KEY: String = "7d2aae1e6ca6f98074073f32bb0f7ef4"
+
         private const val TAG = "LocationService"
 
         private const val PACKAGE_NAME = "com.dongholab.rainoti.service"
 
-        internal const val ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST =
-            "$PACKAGE_NAME.action.FOREGROUND_ONLY_LOCATION_BROADCAST"
+        internal const val ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST = "$PACKAGE_NAME.action.FOREGROUND_ONLY_LOCATION_BROADCAST"
+        internal const val ACTION_FOREGROUND_ONLY_WEATHER_BROADCAST = "$PACKAGE_NAME.action.FOREGROUND_ONLY_WEATHER_BROADCAST"
 
         internal const val EXTRA_LOCATION = "$PACKAGE_NAME.extra.LOCATION"
+        internal const val EXTRA_WEATHER_ID = "$PACKAGE_NAME.extra.WEATHER_ID"
+        internal const val EXTRA_WEATHER_DESC = "$PACKAGE_NAME.extra.WEATHER_DESC"
 
         private const val EXTRA_CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION =
             "$PACKAGE_NAME.extra.CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION"
@@ -58,7 +67,7 @@ class LocationService : Service() {
     private val localBinder = LocalBinder()
 
     private lateinit var notificationManager: NotificationManager
-    private lateinit var connecitvityManager: ConnectivityManager
+    private lateinit var connectvityManager: ConnectivityManager
 
     // TODO: Step 1.1, Review variables (no changes).
     // FusedLocationProviderClient - Main class for receiving location updates.
@@ -78,12 +87,18 @@ class LocationService : Service() {
     // last location to create a Notification if the user navigates away from the app.
     private var currentLocation: Location? = null
 
+    lateinit var weatherAPI: WeatherAPI;
+
+    var currentWeatherId: Int = 0
+
     override fun onCreate() {
         Log.d(TAG, "onCreate()")
 
+        weatherAPI = WeatherGenerator.generate().create(WeatherAPI::class.java)
+
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        connecitvityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val builder: NetworkRequest.Builder = NetworkRequest.Builder()
+        connectvityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val builder: NetworkRequest.Builder = NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
@@ -99,6 +114,35 @@ class LocationService : Service() {
                 super.onLocationResult(locationResult)
 
                 currentLocation = locationResult.lastLocation
+                currentLocation?.run {
+                    weatherAPI.getWeather(
+                        API_KEY,
+                        latitude,
+                        longitude
+                    ).enqueue(object: Callback<Weather> {
+                        override fun onResponse(
+                            call: Call<Weather>,
+                            response: Response<Weather>
+                        ) {
+                            if (response.isSuccessful) {
+                                val weather: Weather? = response.body()
+                                weather?.let {
+                                    val intent = Intent(ACTION_FOREGROUND_ONLY_WEATHER_BROADCAST)
+                                    it.weather.first().let {
+                                        // 날씨 정보 업데이트
+                                        currentWeatherId = it.id
+                                        intent.putExtra(EXTRA_WEATHER_ID, it.id)
+                                        intent.putExtra(EXTRA_WEATHER_DESC, it.description)
+                                    }
+                                    LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
+                                }
+                            }
+                        }
+
+                        override fun onFailure(call: Call<Weather>, t: Throwable) {}
+                    })
+                }
+
 
                 val intent = Intent(ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST)
                 intent.putExtra(EXTRA_LOCATION, currentLocation)
@@ -116,11 +160,16 @@ class LocationService : Service() {
             override fun onAvailable(network: Network) {
                 // 네트워크를 사용할 준비가 되었을 때
                 Log.d("onAvailable", network.toString())
+                val caps: NetworkCapabilities? = connectvityManager.getNetworkCapabilities(network)
+                Log.e("hasWifi", caps?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI).toString())
             }
 
             override fun onLost(network: Network) {
                 // 네트워크가 끊겼을 때
                 Log.d("onLost", network.toString())
+                val caps: NetworkCapabilities? = connectvityManager.getNetworkCapabilities(network)
+                Log.e("hasWifi", caps?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI).toString())
+                Log.e("currentWeather", currentWeatherId.toString())
             }
 
             override fun onCapabilitiesChanged(network : Network, networkCapabilities : NetworkCapabilities) {
@@ -131,7 +180,7 @@ class LocationService : Service() {
                 Log.e("onLinkPropertiesChanged", "The default network changed link properties: " + linkProperties)
             }
         }
-        connecitvityManager.registerNetworkCallback(builder.build(), connectvityCallback)
+        connectvityManager.registerNetworkCallback(builder.build(), connectvityCallback)
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
@@ -162,7 +211,7 @@ class LocationService : Service() {
         stopForeground(true)
         serviceRunningInForeground = false
         configurationChange = false
-        connecitvityManager.unregisterNetworkCallback(connectvityCallback)
+        connectvityManager.unregisterNetworkCallback(connectvityCallback)
         super.onRebind(intent)
     }
 
@@ -182,7 +231,7 @@ class LocationService : Service() {
 
     override fun onDestroy() {
         Log.d(TAG, "onDestroy()")
-        connecitvityManager.unregisterNetworkCallback(connectvityCallback)
+        connectvityManager.unregisterNetworkCallback(connectvityCallback)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
