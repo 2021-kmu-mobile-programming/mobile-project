@@ -6,10 +6,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.location.Location
 import android.net.*
-import android.os.Binder
-import android.os.Build
-import android.os.IBinder
-import android.os.Looper
+import android.os.*
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -25,6 +22,11 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.util.concurrent.TimeUnit
+import android.media.AudioAttributes
+
+
+
+
 
 /**
  * Service tracks location when requested and updates Activity via binding. If Activity is
@@ -53,8 +55,10 @@ class LocationService : Service() {
             "$PACKAGE_NAME.extra.CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION"
 
         private const val NOTIFICATION_ID = 12345678
+        private const val NOTIFICATION_PUSH_ID = 12345679
 
         private const val NOTIFICATION_CHANNEL_ID = "while_in_use_channel_01"
+        private const val NOTIFICATION_PUSH_CHANNEL_ID = "push_channel_01"
     }
     /*
      * Checks whether the bound activity has really gone away (foreground service with notification
@@ -68,6 +72,7 @@ class LocationService : Service() {
 
     private lateinit var notificationManager: NotificationManager
     private lateinit var connectvityManager: ConnectivityManager
+    private lateinit var vibrator: Vibrator
 
     // TODO: Step 1.1, Review variables (no changes).
     // FusedLocationProviderClient - Main class for receiving location updates.
@@ -98,6 +103,8 @@ class LocationService : Service() {
 
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         connectvityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        vibrator = getSystemService(VIBRATOR_SERVICE) as Vibrator
+
         val builder: NetworkRequest.Builder = NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
@@ -149,9 +156,7 @@ class LocationService : Service() {
                 LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
 
                 if (serviceRunningInForeground) {
-                    notificationManager.notify(
-                        NOTIFICATION_ID,
-                        generateNotification(currentLocation))
+                    notificationManager.notify(NOTIFICATION_ID, generateNotification(currentLocation))
                 }
             }
         }
@@ -165,11 +170,16 @@ class LocationService : Service() {
             }
 
             override fun onLost(network: Network) {
-                // 네트워크가 끊겼을 때
+                // 와이파이가 끊겼을 때
                 Log.d("onLost", network.toString())
                 val caps: NetworkCapabilities? = connectvityManager.getNetworkCapabilities(network)
                 Log.e("hasWifi", caps?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI).toString())
                 Log.e("currentWeather", currentWeatherId.toString())
+
+                // 우산이 필요한지 체크
+                if (Weather.getNeedUmbrellaById(currentWeatherId)) {
+                    notificationManager.notify(NOTIFICATION_PUSH_ID, generatePushNotification(currentWeatherId))
+                }
             }
 
             override fun onCapabilitiesChanged(network : Network, networkCapabilities : NetworkCapabilities) {
@@ -286,6 +296,7 @@ class LocationService : Service() {
         }
 
         val bigTextStyle = NotificationCompat.BigTextStyle()
+            .setSummaryText("현재 날씨: " + currentWeatherId.toString())
             .bigText(mainNotificationText)
             .setBigContentTitle(titleText)
 
@@ -310,6 +321,40 @@ class LocationService : Service() {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .addAction(R.drawable.ic_home_black_24dp,  getString(R.string.launch_activity), activityPendingIntent)
             .addAction(R.drawable.ic_action_cancel, getString(R.string.stop_location_updates_button_text), servicePendingIntent)
+            .build()
+    }
+
+    private fun generatePushNotification(weatherId: Int): Notification {
+        Log.d(TAG, "generatePushNotification()")
+
+        val titleText = getString(R.string.app_name)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val notificationChannel = NotificationChannel(NOTIFICATION_CHANNEL_ID, titleText, NotificationManager.IMPORTANCE_HIGH)
+            notificationManager.createNotificationChannel(notificationChannel)
+        }
+
+        val mainText = "날씨가 ${Weather.getWeatherDescById(weatherId)}인 상태입니다. 우산을 챙겨주세요"
+
+        val bigTextStyle = NotificationCompat.BigTextStyle()
+            .bigText(mainText)
+            .setBigContentTitle(titleText)
+
+        if(Build.VERSION.SDK_INT > Build.VERSION_CODES.N_MR1) {
+            vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
+        } else {
+            vibrator.vibrate(500)
+        }
+
+        val notificationCompatBuilder = NotificationCompat.Builder(applicationContext, NOTIFICATION_CHANNEL_ID)
+
+        return notificationCompatBuilder
+            .setStyle(bigTextStyle)
+            .setContentTitle(titleText)
+            .setContentText(mainText)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .build()
     }
 
