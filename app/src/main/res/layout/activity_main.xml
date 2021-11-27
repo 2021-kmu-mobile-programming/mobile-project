@@ -16,10 +16,20 @@
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
         android:text="@string/start_location_updates_button_text"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <com.github.pwittchen.weathericonview.WeatherIconView
+        android:id="@+id/current_weather_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/foreground_only_location_button"
+        app:weatherIconColor="@color/purple_500"
+        app:weatherIconResource="@string/wi_day_sunny"
+        app:weatherIconSize="200" />
 
     <TextView
         android:id="@+id/current_weather"
@@ -27,7 +37,7 @@
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/foreground_only_location_button"/>
+        app:layout_constraintTop_toBottomOf="@+id/current_weather_icon"/>
 
     <TextView
         android:id="@+id/output_text_view"
@@ -41,7 +51,9 @@
         android:padding="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/current_weather" />
+        app:layout_constraintTop_toBottomOf="@+id/current_weather"
+        app:layout_constraintVertical_bias="0.0" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

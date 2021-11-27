@@ -14,6 +14,7 @@ import androidx.core.app.ActivityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.dongholab.rainoti.api.WeatherAPI
 import com.dongholab.rainoti.api.WeatherGenerator
+import com.dongholab.rainoti.data.Weather
 import com.dongholab.rainoti.databinding.ActivityMainBinding
 import com.dongholab.rainoti.service.LocationService
 import com.google.android.material.snackbar.Snackbar
@@ -22,11 +23,6 @@ private const val TAG = "MainActivity"
 private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 
 class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
-
-    companion object {
-        val API_KEY: String = "7d2aae1e6ca6f98074073f32bb0f7ef4"
-    }
-
     private lateinit var binding: ActivityMainBinding
 
     private var foregroundOnlyLocationServiceBound = false
@@ -42,8 +38,6 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     private lateinit var outputTextView: TextView
 
     private lateinit var currentWeatherTextView: TextView
-
-    lateinit var weatherAPI: WeatherAPI;
 
     private val foregroundOnlyServiceConnection = object: ServiceConnection {
 
@@ -68,16 +62,6 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        weatherAPI = WeatherGenerator.generate().create(WeatherAPI::class.java)
-
-//        val js = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-//        val serviceComponent = ComponentName(this, MyJobService::class.java)
-//        val jobInfo = JobInfo.Builder(1, serviceComponent)
-//            .setPeriodic(TimeUnit.MINUTES.toMillis(15))
-//            .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-//            .build()
-//        js.schedule(jobInfo)
 
         currentWeatherTextView = binding.currentWeather
         outputTextView = binding.outputTextView
@@ -215,6 +199,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
                     val weatherDesc = intent.getStringExtra(LocationService.EXTRA_WEATHER_DESC)
 
                     binding.currentWeather.text = "$weatherId / $weatherDesc"
+                    binding.currentWeatherIcon.setIconResource(getString(Weather.getWeatherIconById(weatherId)))
                 }
             }
         }
