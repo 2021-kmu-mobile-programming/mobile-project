@@ -159,7 +159,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
-        // Updates button states if new while in use location is added to SharedPreferences.
+        // Updates button states if new while in use location is ad1ded to SharedPreferences.
         if (key == SharedPreferenceUtil.KEY_FOREGROUND_ENABLED) {
             updateButtonState(sharedPreferences.getBoolean(
                 SharedPreferenceUtil.KEY_FOREGROUND_ENABLED, false)
@@ -188,13 +188,13 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
                         LocationService.EXTRA_LOCATION
                     )
 
-                    if (location != null) {
-                        logResultsToScreen("Foreground location: ${location.toText()}")
+                    location?.let {
+                        binding.latLon.text = "위도: ${it.latitude} / 경도: ${it.longitude}"
+                        logResultsToScreen("Foreground location: ${it.toText()}")
                     }
                 }
                 LocationService.ACTION_FOREGROUND_ONLY_WEATHER_BROADCAST -> {
                     val weatherId = intent.getIntExtra(LocationService.EXTRA_WEATHER_ID, 0)
-                    val weatherDesc = intent.getStringExtra(LocationService.EXTRA_WEATHER_DESC)
 
                     binding.currentWeather.text = Weather.getWeatherDescById(weatherId)
                     binding.currentWeatherIcon.setIconResource(getString(Weather.getWeatherIconById(weatherId)))

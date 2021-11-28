@@ -177,9 +177,9 @@ class LocationService : Service() {
                 Log.e("currentWeather", currentWeatherId.toString())
 
                 // 우산이 필요한지 체크
-                if (Weather.getNeedUmbrellaById(currentWeatherId)) {
+//                if (Weather.getNeedUmbrellaById(currentWeatherId)) {
                     notificationManager.notify(NOTIFICATION_PUSH_ID, generatePushNotification(currentWeatherId))
-                }
+//                }
             }
 
             override fun onCapabilitiesChanged(network : Network, networkCapabilities : NetworkCapabilities) {
@@ -287,7 +287,8 @@ class LocationService : Service() {
     private fun generateNotification(location: Location?): Notification {
         Log.d(TAG, "generateNotification()")
 
-        val mainNotificationText = location?.toText() ?: getString(R.string.no_location_text)
+//        val mainNotificationText = location?.toText() ?: getString(R.string.no_location_text)
+        val mainNotificationText = "우산알림 서비스 실행중"
         val titleText = getString(R.string.app_name)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -296,7 +297,7 @@ class LocationService : Service() {
         }
 
         val bigTextStyle = NotificationCompat.BigTextStyle()
-            .setSummaryText("현재 날씨: " + currentWeatherId.toString())
+//            .setSummaryText("현재 날씨: " + currentWeatherId.toString())
             .bigText(mainNotificationText)
             .setBigContentTitle(titleText)
 
