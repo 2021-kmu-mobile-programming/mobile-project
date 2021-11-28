@@ -77,7 +77,7 @@ data class Weather(
         fun getWeatherDescById(id: Int) = when (id / 100) {
             8 -> {
                 when (id) {
-                    800 -> "맑은"
+                    800 -> "맑음"
                     else -> "흐린"
                 }
             }
@@ -86,7 +86,7 @@ data class Weather(
             5 -> "비"
             3 -> "이슬비"
             2 -> "천둥"
-            else -> "맑은"
+            else -> "맑음"
         }
 
         fun getNeedUmbrellaById(id: Int) = when (id / 100) {

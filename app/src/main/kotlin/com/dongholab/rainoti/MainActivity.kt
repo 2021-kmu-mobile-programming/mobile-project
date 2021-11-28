@@ -12,8 +12,6 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.dongholab.rainoti.api.WeatherAPI
-import com.dongholab.rainoti.api.WeatherGenerator
 import com.dongholab.rainoti.data.Weather
 import com.dongholab.rainoti.databinding.ActivityMainBinding
 import com.dongholab.rainoti.service.LocationService
@@ -198,7 +196,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
                     val weatherId = intent.getIntExtra(LocationService.EXTRA_WEATHER_ID, 0)
                     val weatherDesc = intent.getStringExtra(LocationService.EXTRA_WEATHER_DESC)
 
-                    binding.currentWeather.text = "$weatherId / $weatherDesc"
+                    binding.currentWeather.text = Weather.getWeatherDescById(weatherId)
                     binding.currentWeatherIcon.setIconResource(getString(Weather.getWeatherIconById(weatherId)))
                 }
             }

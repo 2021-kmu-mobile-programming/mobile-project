@@ -334,7 +334,7 @@ class LocationService : Service() {
             notificationManager.createNotificationChannel(notificationChannel)
         }
 
-        val mainText = "날씨가 ${Weather.getWeatherDescById(weatherId)}인 상태입니다. 우산을 챙겨주세요"
+        val mainText = "현재 날씨는 (${Weather.getWeatherDescById(weatherId)})입니다. 우산을 챙겨주세요"
 
         val bigTextStyle = NotificationCompat.BigTextStyle()
             .bigText(mainText)
