@@ -177,9 +177,9 @@ class LocationService : Service() {
                 Log.e("currentWeather", currentWeatherId.toString())
 
                 // 우산이 필요한지 체크
-//                if (Weather.getNeedUmbrellaById(currentWeatherId)) {
+                if (Weather.getNeedUmbrellaById(currentWeatherId)) {
                     notificationManager.notify(NOTIFICATION_PUSH_ID, generatePushNotification(currentWeatherId))
-//                }
+                }
             }
 
             override fun onCapabilitiesChanged(network : Network, networkCapabilities : NetworkCapabilities) {
