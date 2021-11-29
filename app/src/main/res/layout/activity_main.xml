@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:paddingTop="30sp"
     tools:context=".MainActivity">
 
     <com.github.pwittchen.weathericonview.WeatherIconView
@@ -17,37 +17,36 @@
         app:layout_constraintTop_toTopOf="parent"
         app:weatherIconColor="@color/primaryColor"
         app:weatherIconResource="@string/wi_na"
-        app:weatherIconSize="200" />
+        app:weatherIconSize="180" />
 
     <TextView
         android:id="@+id/current_weather"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="알 수 없음"
-        android:textColor="@color/black"
         android:layout_gravity="center"
+        android:text="알 수 없음"
         android:textAlignment="center"
+        android:textColor="@color/black"
         android:textSize="18dp"
         app:layout_constraintStart_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/current_weather_icon"/>
+        app:layout_constraintTop_toBottomOf="@+id/current_weather_icon" />
 
     <TextView
         android:id="@+id/lat_lon"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@color/black"
         android:layout_gravity="center"
-        android:textAlignment="center"
-        android:textSize="20dp"
         android:layout_marginTop="10dp"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="20dp"
         app:layout_constraintStart_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/current_weather"/>
+        app:layout_constraintTop_toBottomOf="@+id/current_weather" />
 
     <TextView
         android:id="@+id/output_text_view"
-        android:visibility="gone"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="16dp"
@@ -56,6 +55,7 @@
         android:layout_marginBottom="16dp"
         android:background="@drawable/background_border"
         android:padding="8dp"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"

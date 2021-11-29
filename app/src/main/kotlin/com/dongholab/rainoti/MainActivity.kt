@@ -3,6 +3,8 @@ package com.dongholab.rainoti
 import android.Manifest
 import android.content.*
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.location.Location
 import android.os.Bundle
 import android.os.IBinder
@@ -53,6 +55,15 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        supportActionBar?.apply {
+            // set action bar background color
+            setBackgroundDrawable(
+                ColorDrawable(
+                    Color.parseColor("#ffffff")
+                )
+            )
+        }
 
         foregroundOnlyBroadcastReceiver = ForegroundOnlyBroadcastReceiver()
 
