@@ -1,19 +1,25 @@
 앱 이름[레인노티]
 
 실행환경
+-gradleVersion: 7.0.3 (JDK 11 필요, 설정에서 Build > Build Tools > Gradle > Gradle JDK 11 지정)
 -buildToolsVersion: 30.0.3
 -compileSdkVersion: 30 (Android 10 Q)
 -targetSdkVersion: 30 (Android 10 Q)
 -packageName: com.dongholab.rainoti
--kotlinVersion: 1.5.31 (코틀린 프로젝트입니다)
+-kotlinVersion: 1.5.31 (코틀린 프로젝트, JDK 8 필요)
 
 구현내용
+-시작 액티비티(SplashActivity)
+*레이아웃은 RelativeLayout로 구성
+*앱 실행시 로딩을 위해 표시하는 액티비티
+
 -서비스 활성화 액티비티(MainActivity)
 *레이아웃은 ConstraintLayout로 구성
-*앱 실행시 서비스 실행여부를 체크하여 설정중엔 알림 트리거가 동작하지 않도록 구성
+*현재 액티비티 실행시 서비스 실행여부를 체크하여 설정중엔 알림 트리거가 동작하지 않도록 구성
 *날씨정보와 위치정보를 전달받지 못하게 되면 N/A라고 표기되어 서비스가 잘못돌아가는지 확인할 수 있습니다.
 *서비스 활성화시 브로드캐스트 리시버를 통해 서비스에서 주기적으로 전달해주는 위치정보와 위치정보가 업데이트 되었을 때 날씨정보 API를 호출하여 액티비티로 전달받습니다.
 *날씨 아이콘은 오픈소스 라이브러리인 weathericonview를 사용하여 날씨 아이콘을 실제 날씨에 맞게 렌더링합니다.
+*API가 정상적으로 호출되게 되면 현재 주소와 날씨 정보를 액티비티에서 보여줍니다.
 
 -Foreground 로케이션 서비스(LocationService)
 *생성자로 Notification 서비스, Connectivity 서비스, Vibrate 서비스를 정의하였습니다.
