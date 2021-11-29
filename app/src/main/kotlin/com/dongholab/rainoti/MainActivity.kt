@@ -5,6 +5,8 @@ import android.content.*
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.location.Address
+import android.location.Geocoder
 import android.location.Location
 import android.os.Bundle
 import android.os.IBinder
@@ -18,6 +20,7 @@ import com.dongholab.rainoti.data.Weather
 import com.dongholab.rainoti.databinding.ActivityMainBinding
 import com.dongholab.rainoti.service.LocationService
 import com.google.android.material.snackbar.Snackbar
+import java.util.*
 
 private const val TAG = "MainActivity"
 private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
@@ -202,6 +205,14 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
                     location?.let {
                         binding.latLon.text = "위도: ${it.latitude} / 경도: ${it.longitude}"
                         logResultsToScreen("Foreground location: ${it.toText()}")
+                        var mGeoCoder =  Geocoder(applicationContext, Locale.KOREAN)
+                        var mResultList: List<Address>? = null
+                        mResultList = mGeoCoder.getFromLocation(
+                            it.latitude!!, it.longitude!!, 1
+                        )
+                        mResultList?.let {
+                            binding.latStr.text = "${it[0].getAddressLine(0)}"
+                        }
                     }
                 }
                 LocationService.ACTION_FOREGROUND_ONLY_WEATHER_BROADCAST -> {

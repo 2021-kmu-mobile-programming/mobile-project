@@ -33,7 +33,7 @@
         app:layout_constraintTop_toBottomOf="@+id/current_weather_icon" />
 
     <TextView
-        android:id="@+id/lat_lon"
+        android:id="@+id/lat_str"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
@@ -41,6 +41,19 @@
         android:textAlignment="center"
         android:textColor="@color/black"
         android:textSize="20dp"
+        app:layout_constraintStart_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/current_weather" />
+
+    <TextView
+        android:id="@+id/lat_lon"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="44dp"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="10dp"
         app:layout_constraintStart_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/current_weather" />
