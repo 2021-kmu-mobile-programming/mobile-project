@@ -12,5 +12,11 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
+        <item name="actionBarTheme">@style/ThemeOverlay.Actionbar</item>
+    </style>
+
+    <style name="ThemeOverlay.Actionbar" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar" >
+        <item name="android:textColorPrimary">@color/primaryColor</item>
+        <item name="android:textStyle">bold</item>
     </style>
 </resources>
